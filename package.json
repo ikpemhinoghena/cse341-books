@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env server.js",
-    "dev": "nodemon --env-file=.env server.js"
+    "dev": "nodemon --env-file=.env server.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
     "express": "^5.3.0"
   },
   "devDependencies": {
+    "eslint": "^10.14.0",
     "nodemon": "^3.1.14"
   }
 }
