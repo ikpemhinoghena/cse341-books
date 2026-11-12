@@ -20,37 +20,35 @@
         ],
         "responses": {
           "200": {
-            "description": "An array of book documents",
+            "description": "All books without MongoDB _id or the legacy author field; an empty collection returns []; ordering is not guaranteed",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "properties": {
-                      "_id": {
-                        "type": "string"
-                      },
-                      "id": {
-                        "type": "string"
-                      },
-                      "author": {
-                        "type": "string"
-                      },
-                      "title": {
-                        "type": "string"
-                      },
-                      "publicationDate": {
-                        "type": "string"
+                    "$ref": "#/components/schemas/Book"
+                  }
+                },
+                "examples": {
+                  "books": {
+                    "value": [
+                      {
+                        "id": "b4",
+                        "authorId": "a1",
+                        "title": "Example Book Title",
+                        "publicationDate": "2026-01-15"
                       }
-                    }
+                    ]
+                  },
+                  "empty": {
+                    "value": []
                   }
                 }
               }
             }
           },
           "500": {
-            "description": "An unexpected server error occurred",
+            "description": "Internal server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -58,6 +56,114 @@
                   "required": [
                     "message"
                   ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Internal server error"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a book",
+        "tags": [
+          "Books"
+        ],
+        "description": "Requires a JSON object with id, authorId, title, and publicationDate. Rejects missing, null, blank, incorrectly typed or unknown fields, malformed JSON, and missing or incorrect Content-Type. Preserves accepted strings without trimming or case changes. Validates the body, then duplicate ID, then author existence. A unique case-sensitive index prevents duplicate IDs, including concurrent requests.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Book"
+              },
+              "example": {
+                "id": "b4",
+                "authorId": "a1",
+                "title": "Example Book Title",
+                "publicationDate": "2026-01-15"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created book without MongoDB _id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                },
+                "example": {
+                  "id": "b4",
+                  "authorId": "a1",
+                  "title": "Example Book Title",
+                  "publicationDate": "2026-01-15"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request rejected without writing book data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Invalid book data",
+                        "Book id already exists",
+                        "Author not found"
+                      ]
+                    }
+                  }
+                },
+                "examples": {
+                  "error1": {
+                    "value": {
+                      "message": "Invalid book data"
+                    }
+                  },
+                  "error2": {
+                    "value": {
+                      "message": "Book id already exists"
+                    }
+                  },
+                  "error3": {
+                    "value": {
+                      "message": "Author not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false,
                   "properties": {
                     "message": {
                       "type": "string",
@@ -78,7 +184,7 @@
     },
     "/books/{id}": {
       "get": {
-        "summary": "Retrieve a book by its custom string ID",
+        "summary": "Retrieve a book by custom ID",
         "tags": [
           "Books"
         ],
@@ -87,42 +193,32 @@
             "in": "path",
             "name": "id",
             "required": true,
-            "description": "The book's custom string ID",
+            "description": "Exact, case-sensitive custom book ID; not a MongoDB ObjectId",
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "b4"
           }
         ],
         "responses": {
           "200": {
-            "description": "The matching book document",
+            "description": "The matching book with authorId and without MongoDB _id",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "_id": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    },
-                    "author": {
-                      "type": "string"
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "publicationDate": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Book"
+                },
+                "example": {
+                  "id": "b4",
+                  "authorId": "a1",
+                  "title": "Example Book Title",
+                  "publicationDate": "2026-01-15"
                 }
               }
             }
           },
           "404": {
-            "description": "No book matches the requested ID",
+            "description": "Book not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -130,6 +226,7 @@
                   "required": [
                     "message"
                   ],
+                  "additionalProperties": false,
                   "properties": {
                     "message": {
                       "type": "string",
@@ -146,7 +243,7 @@
             }
           },
           "500": {
-            "description": "An unexpected server error occurred",
+            "description": "Internal server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -154,6 +251,250 @@
                   "required": [
                     "message"
                   ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Internal server error"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update an existing book",
+        "tags": [
+          "Books"
+        ],
+        "description": "Requires authorId, title, and publicationDate in a JSON object. Optional id must exactly match the URL and is never changed. Rejects missing, null, blank, incorrectly typed or unknown fields, malformed JSON, and missing or incorrect Content-Type. Validates the body, then book existence, then author existence. Never inserts a missing book. Unchanged valid values return 200. Accepted strings are preserved.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Exact, case-sensitive custom book ID; not a MongoDB ObjectId",
+            "schema": {
+              "type": "string"
+            },
+            "example": "b4"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "authorId",
+                  "title",
+                  "publicationDate"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "\\S",
+                    "description": "Immutable custom string ID, compared exactly and case-sensitively",
+                    "example": "b4"
+                  },
+                  "authorId": {
+                    "type": "string",
+                    "pattern": "\\S",
+                    "description": "Custom ID of an existing author",
+                    "example": "a1"
+                  },
+                  "title": {
+                    "type": "string",
+                    "pattern": "\\S",
+                    "example": "Example Book Title"
+                  },
+                  "publicationDate": {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+                    "description": "A real calendar date in YYYY-MM-DD format with year 0001 through 9999; future dates are allowed",
+                    "example": "2026-01-15"
+                  }
+                }
+              },
+              "example": {
+                "authorId": "a2",
+                "title": "Updated Book Title",
+                "publicationDate": "2026-02-20"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated book with its original ID, excluding MongoDB _id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Book"
+                },
+                "example": {
+                  "id": "b4",
+                  "authorId": "a2",
+                  "title": "Updated Book Title",
+                  "publicationDate": "2026-02-20"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Request rejected without writing book data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Invalid book data",
+                        "Author not found"
+                      ]
+                    }
+                  }
+                },
+                "examples": {
+                  "error1": {
+                    "value": {
+                      "message": "Invalid book data"
+                    }
+                  },
+                  "error2": {
+                    "value": {
+                      "message": "Author not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Book not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Book not found"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Book not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Internal server error"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Internal server error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a book",
+        "tags": [
+          "Books"
+        ],
+        "description": "Deletes only the matching book. Author documents remain unchanged. Returns 404 if no document is deleted.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Exact, case-sensitive custom book ID; not a MongoDB ObjectId",
+            "schema": {
+              "type": "string"
+            },
+            "example": "b4"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Book deleted; no response body"
+          },
+          "404": {
+            "description": "Book not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "enum": [
+                        "Book not found"
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Book not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false,
                   "properties": {
                     "message": {
                       "type": "string",
@@ -575,6 +916,42 @@
   },
   "components": {
     "schemas": {
+      "Book": {
+        "type": "object",
+        "required": [
+          "id",
+          "authorId",
+          "title",
+          "publicationDate"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "\\S",
+            "description": "Immutable custom string ID, compared exactly and case-sensitively",
+            "example": "b4"
+          },
+          "authorId": {
+            "type": "string",
+            "pattern": "\\S",
+            "description": "Custom ID of an existing author",
+            "example": "a1"
+          },
+          "title": {
+            "type": "string",
+            "pattern": "\\S",
+            "example": "Example Book Title"
+          },
+          "publicationDate": {
+            "type": "string",
+            "format": "date",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+            "description": "A real calendar date in YYYY-MM-DD format with year 0001 through 9999; future dates are allowed",
+            "example": "2026-01-15"
+          }
+        }
+      },
       "Author": {
         "type": "object",
         "required": [
